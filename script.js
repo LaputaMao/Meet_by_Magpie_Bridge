@@ -6,6 +6,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1. 初始化场景、相机、渲染器
     let scene, camera, renderer, controls;
+    // 牛郎星座的轮廓点 (相对坐标，您可以调整这些值来改变形状)
+    const niulangPoints = [
+        // 头部、身体、四肢等关键点
+        new THREE.Vector3(0, 5, 0),    // 头部
+        new THREE.Vector3(0, 3, 0),    // 颈部
+        new THREE.Vector3(-1, 1, 0),   // 左手
+        new THREE.Vector3(0, 0, 0),    // 身体中心
+        new THREE.Vector3(1, 1, 0),    // 右手
+        new THREE.Vector3(0, -2, 0),   // 腰部
+        new THREE.Vector3(-1, -4, 0),  // 左脚
+        new THREE.Vector3(1, -4, 0)    // 右脚
+    ];
+
+    // 织女星座的轮廓点 (放在牛郎的右侧)
+    const zhinuPoints = [
+        new THREE.Vector3(10, 5, 0),   // 头部
+        new THREE.Vector3(10, 3, 0),   // 颈部
+        new THREE.Vector3(9, 1, 0),    // 左手
+        new THREE.Vector3(10, 0, 0),   // 身体中心
+        new THREE.Vector3(11, 1, 0),   // 右手
+        new THREE.Vector3(10, -3, 0),  // 腰部
+        new THREE.Vector3(9, -5, 0),   // 裙摆左
+        new THREE.Vector3(11, -5, 0)   // 裙摆右
+    ];
+
 
     function init() {
         // 创建场景
@@ -25,14 +50,22 @@ document.addEventListener('DOMContentLoaded', () => {
         scene.add(ambientLight);
 
 
+        // 创建牛郎织女星座
+        const niulang = createConstellation(niulangPoints, 0x3399ff, '牛郎'); // 蓝色
+        const zhinu = createConstellation(zhinuPoints, 0xff3366, '织女');   // 粉红色
+
+        scene.add(niulang);
+        scene.add(zhinu);
+
+
         // 设置轨道控制器
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
+        controls.dampingFactor = 0.03;
         controls.target.set(0, 0, 0);
         controls.update();
 
-        camera.lookAt(10, 0, 0);
+        camera.lookAt(5, 0, 0);
 
         //pointsMaterial
         const particleGeometry = new THREE.BufferGeometry();
@@ -101,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
             requestAnimationFrame(animate);
             controls.update();// 更新控制器
 
+            const time = Date.now() * 0.001;
             const elapsedTime = clock.getElapsedTime(); // 获取从时钟开始到现在的总时间（秒）
 
             // 摄像机缓慢向后移动，产生鹊桥向前延伸的效果
@@ -114,11 +148,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 const i3 = i * 3;
                 // 简单的闪烁：改变粒子大小或透明度会更高效，这里演示位置变化
                 // 实际项目中，更推荐通过自定义着色器（Shader）来实现高效闪烁
-                p_positions[i3 + 1] = positions[i3 + 1] + Math.sin(elapsedTime * velocityArray[i]) * 0.005;
+                p_positions[i3 + 1] = positions[i3 + 1] + Math.sin(elapsedTime * velocityArray[i]) * 0.01   ;
                 // p_positions[i + 1] += 0.01;
             }
             // 重要：在更改了BufferGeometry的属性后，必须告知Three.js这些属性需要更新
             particleGeometry.attributes.position.needsUpdate = true;
+
+            // 让星座星星闪烁
+            scene.traverse(object => {
+                if (object.isPoints && (object.name === '牛郎' || object.name === '织女')) {
+                    const positions = object.geometry.attributes.position.array;
+                    const originalPositions = object.userData.originalPositions || positions.slice();
+                    object.userData.originalPositions = originalPositions;
+
+                    for (let i = 0; i < positions.length; i += 3) {
+                        const index = i / 3;
+                        // 每个星星有不同的闪烁频率
+                        const scale = 0.2 * Math.sin(time * 2 + index * 0.5) + 0.8;
+                        positions[i] = originalPositions[i] * scale;
+                        positions[i + 1] = originalPositions[i + 1] * scale;
+                        positions[i + 2] = originalPositions[i + 2] * scale;
+                    }
+                    object.geometry.attributes.position.needsUpdate = true;
+                }
+            });
 
             renderer.render(scene, camera);
         }
@@ -226,6 +279,77 @@ document.addEventListener('DOMContentLoaded', () => {
         bridge.userData.floatSpeed = 0.002; // 浮动速度
 
         return bridge;
+    }
+
+    // 创建牛郎和织女星座
+    function createConstellation(points, color, name) {
+        const group = new THREE.Group();
+        group.name = name;
+
+        // 1. 创建发光的星星点
+        const starGeometry = new THREE.BufferGeometry();
+        const positions = [];
+        const colors = [];
+
+        const starColor = new THREE.Color(color);
+
+        points.forEach(point => {
+            positions.push(point.x, point.y, point.z);
+            colors.push(starColor.r, starColor.g, starColor.b);
+
+            // 为每个点添加一些随机偏移，让星座更自然
+            positions.push(
+                point.x + (Math.random() - 0.5) * 0.3,
+                point.y + (Math.random() - 0.5) * 0.3,
+                point.z + (Math.random() - 0.5) * 0.3
+            );
+            colors.push(starColor.r, starColor.g, starColor.b);
+        });
+
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+        starGeometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+
+        const starMaterial = new THREE.PointsMaterial({
+            size: 0.8,
+            sizeAttenuation: true,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.9,
+            blending: THREE.AdditiveBlending
+        });
+
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        group.add(stars);
+
+        // 2. 创建连接线（星座的轮廓）
+        const lineGeometry = new THREE.BufferGeometry();
+
+        // 定义如何连接这些点（形成人形轮廓）
+        // 这里是一个简单的人形连接示例，您可以根据需要调整
+        const lineConnections = [
+            0, 1, // 头-颈
+            1, 3, // 颈-身
+            3, 2, // 身-左手
+            3, 4, // 身-右手
+            3, 5, // 身-腰
+            5, 6, // 腰-左脚
+            5, 7  // 腰-右脚
+        ];
+
+        lineGeometry.setAttribute('position', starGeometry.attributes.position);
+        lineGeometry.setIndex(lineConnections);
+
+        const lineMaterial = new THREE.LineBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.6,
+            linewidth: 2
+        });
+
+        const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+        group.add(lines);
+
+        return group;
     }
 
     // 2. 点击“开始”按钮的事件
