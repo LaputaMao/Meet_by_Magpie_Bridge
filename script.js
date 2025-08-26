@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('scene');
 
     // 1. 初始化场景、相机、渲染器
-    let scene, camera, renderer, bridge, controls;
+    let scene, camera, renderer, controls;
 
     function init() {
         // 创建场景
@@ -20,26 +20,18 @@ document.addEventListener('DOMContentLoaded', () => {
         renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
 
-        // 4. 添加灯光（让鹊桥更加明亮）
+        // 4. 添加光源
         const ambientLight = new THREE.AmbientLight(0x404040, 1.5); // 环境光
         scene.add(ambientLight);
 
-        const pointLight = new THREE.PointLight(0xffffaa, 1, 100); // 点光源
-        pointLight.position.set(0, 0, 10);
-        scene.add(pointLight);
-
-        // 5. 创建鹊桥并添加到场景中
-        bridge = createMagpieBridge(); // 调用函数创建鹊桥
-        scene.add(bridge); // 将鹊桥添加到场景中
 
         // 设置轨道控制器
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.target.set(0, 0, 0); // 看向鹊桥中心
+        controls.target.set(0, 0, 0);
         controls.update();
 
-        // 6. 设置摄像机初始视角，看向鹊桥的大致方向
         camera.lookAt(10, 0, 0);
 
         //pointsMaterial
@@ -91,9 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
             blending: THREE.AdditiveBlending, // 叠加混合模式。让粒子重叠的部分更亮，像真正的星星一样。
             depthWrite: false, // 在需要大量透明粒子叠加时，禁用深度写入可以解决渲染问题，让画面更干净。
         });
-        // 也可以这样单独设置属性
-        // particleMaterial.size = 0.2;
-        // particleMaterial.color = new THREE.Color(0xffcc00); // 设置成淡黄色
 
         // 7. 创建最终的粒子系统
         const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
@@ -110,31 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function animate() {
             requestAnimationFrame(animate);
-            controls.update(); // 重要：更新控制器
+            controls.update();// 更新控制器
 
-            const elapsedTime = clock.getElapsedTime();
-            const bridgePositions = bridge.geometry.attributes.position.array;
-            const originalPositions = bridge.userData.originalPositions;
-            const floatRange = bridge.userData.floatRange;
-            const floatSpeed = bridge.userData.floatSpeed;
-
-            // 更新每个粒子的位置，实现浮动
-            for (let i = 0; i < positions.length; i += 3) {
-                const particleIndex = i / 3;
-
-                // 使用正弦函数创建平滑的浮动，每个粒子有不同相位
-                const offset = Math.sin(elapsedTime * floatSpeed + particleIndex * 0.1) * floatRange;
-
-                bridgePositions[i] = originalPositions[i] + offset * (Math.random() - 0.5);
-                bridgePositions[i + 1] = originalPositions[i + 1] + offset * (Math.random() - 0.5);
-                bridgePositions[i + 2] = originalPositions[i + 2] + offset * (Math.random() - 0.5) * 0.5;
-            }
-            bridge.geometry.attributes.position.needsUpdate = true;
+            const elapsedTime = clock.getElapsedTime(); // 获取从时钟开始到现在的总时间（秒）
 
             // 摄像机缓慢向后移动，产生鹊桥向前延伸的效果
             if (elapsedTime < 10) { // 前10秒完成延伸动画
-                camera.position.z = 10 - elapsedTime * 2; // 调整系数控制速度
-                camera.lookAt(0, 0, -20); // 始终看向鹊桥方向
+                camera.position.z = 10 - elapsedTime * 1; // 调整系数控制速度
+                camera.lookAt(0, 0, -20);
             }
 
             // 遍历所有粒子，通过正弦函数根据时间改变其Y坐标，模拟闪烁
