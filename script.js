@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('scene');
 
     // 1. 初始化场景、相机、渲染器
-    let scene, camera, renderer, bridge;
+    let scene, camera, renderer, bridge, controls;
 
     function init() {
         // 创建场景
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 创建相机 (视角, 宽高比, 近截面, 远截面)
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(-20, 0, 0); // 设置摄像机初始位置（在鹊桥的"起点"后方）
+        camera.position.set(0, 0, 0); // 设置摄像机初始位置（在鹊桥的"起点"后方）
 
         // 创建渲染器，绑定到canvas元素上
         renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -31,6 +31,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // 5. 创建鹊桥并添加到场景中
         bridge = createMagpieBridge(); // 调用函数创建鹊桥
         scene.add(bridge); // 将鹊桥添加到场景中
+
+        // 设置轨道控制器
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.target.set(0, 0, 0); // 看向鹊桥中心
+        controls.update();
 
         // 6. 设置摄像机初始视角，看向鹊桥的大致方向
         camera.lookAt(10, 0, 0);
@@ -103,6 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function animate() {
             requestAnimationFrame(animate);
+            controls.update(); // 重要：更新控制器
+
             const elapsedTime = clock.getElapsedTime();
             const bridgePositions = bridge.geometry.attributes.position.array;
             const originalPositions = bridge.userData.originalPositions;
