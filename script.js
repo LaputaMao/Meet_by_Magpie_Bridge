@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         controls.enableDamping = true;
         controls.dampingFactor = 0.03;
         // **修改点：保持 controls.target 在原点**
-        controls.target.set(0, 0, 0);
+        controls.target.set(0, 2, 0);
         controls.update();
 
         //pointsMaterial
@@ -258,12 +258,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. 点击“开始”按钮的事件
     startBtn.addEventListener('click', () => {
         // 隐藏开始界面
-        startScreen.style.display = 'none';
-        // 显示Canvas画布
-        canvas.style.display = 'block';
+        // startScreen.style.display = 'none';
+        // // 显示Canvas画布
+        // canvas.style.display = 'block';
         // 初始化Three.js场景
-        init();
+        // init();
         // 这里可以初始化并播放背景音乐
-        // const sound = new Howl({ src: ['music.mp3'] }); sound.play();
+        const sound = new Howl({ src: ['LuvLetter.mp3'] }); sound.play();
+        // 先将不透明度设为0，开始淡出
+        startScreen.style.opacity = '0';
+
+        // 当淡出过渡完成后，再彻底隐藏元素和显示画布
+        setTimeout(() => {
+            startScreen.style.display = 'none';
+            // 确保 canvas 也能显示出来，或者在 CSS 中保持它的初始状态是可见的
+            canvas.style.display = 'block';
+            // 初始化Three.js场景
+            init();
+        }, 1000); // 这里的1000毫秒要和CSS中的transition时间一致
+
     });
 });

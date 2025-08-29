@@ -5,8 +5,12 @@
 }
 
 body {
-    overflow: hidden; /* 隐藏滚动条 */
-    font-family: 'Microsoft YaHei', sans-serif; /* 使用雅黑字体 */
+    overflow: hidden;
+    /* 隐藏滚动条 */
+    font-family: 'Microsoft YaHei', sans-serif;
+    /* 使用雅黑字体 */
+    background-color: #0b0b2a;
+    /* 确保body有一个深色背景 */
 }
 
 #scene {
@@ -15,33 +19,43 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    display: none; /* 初始隐藏，点击开始后显示 */
+    display: none;
+    /* 初始隐藏，点击开始后显示 */
+    background-color: #0b0b2a;
+    /* 和你的 Three.js 场景背景色保持一致 */
 }
 
 #startScreen {
     position: fixed;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to bottom, #080835, #2a0845); /* 深蓝紫色渐变背景 */
+    background: linear-gradient(to bottom, #080835, #2a0845);
+    /* 深蓝紫色渐变背景 */
     color: white;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 10;
+    /* 添加这三行来实现过渡效果 */
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 1s ease-in-out, visibility 1s ease-in-out;
 }
 
 #startBtn {
     margin-top: 2rem;
     padding: 15px 30px;
     font-size: 1.2rem;
-    background: rgba(255, 105, 180, 0.7); /* 粉红色背景 */
+    background: rgba(255, 105, 180, 0.7);
+    /* 粉红色背景 */
     color: white;
     border: none;
     border-radius: 50px;
     cursor: pointer;
     transition: background 0.3s ease;
 }
+
 #startBtn:hover {
     background: rgba(255, 105, 180, 1);
 }
